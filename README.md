@@ -12,7 +12,9 @@ This module uses:
 ## Example
 
 ```js
-FridaInject('Target.exe', require.resolve('frida-inject'), {
+const FridaInject = require('frida-inject');
+
+FridaInject('Target.exe', require.resolve('./source.js'), {
   onAttach: function(session) {
     console.log('Attached to process');
   },
