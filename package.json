@@ -1,0 +1,18 @@
+{
+  "name": "frida-inject",
+  "version": "0.0.1",
+  "description": "This module allows you to easily inject javascript using frida and frida-load.",
+  "dependencies": {
+    "frida": "latest",
+    "frida-load": "latest",
+    "co": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/freehuntx/frida-inject"
+  },
+  "author": {
+    "name": "freehuntx"
+  },
+  "license": "MIT"
+}
