@@ -1,11 +1,13 @@
 {
   "name": "frida-inject",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "This module allows you to easily inject javascript using frida and frida-load.",
   "author": {
     "name": "freehuntx"
   },
   "dependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
     "frida": "^10.6.52",
     "frida-compile": "^5.3.4"
   },

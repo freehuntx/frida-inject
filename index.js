@@ -2,6 +2,7 @@ const EventEmitter = require('events')
 const fs = require('fs')
 const os = require('os')
 const exec = require('child_process').exec
+const Babel = require('babel-core')
 const Frida = require('frida')
 const FridaCompile = require('frida-compile')
 
@@ -94,6 +95,7 @@ module.exports = class FridaInject extends EventEmitter {
     if (fs.existsSync(input)) {
       try {
         source = (await FridaCompile.compile(input, {}, {})).bundle
+        source = Babel.transform(source, { presets: ['es2015'] }).code
       }
       catch(e) {
         source = ''
