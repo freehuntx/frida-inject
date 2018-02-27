@@ -92,20 +92,30 @@ module.exports = class FridaInject extends EventEmitter {
     let source = input
 
     if (fs.existsSync(input)) {
-      source = (await FridaCompile.compile(input, {}, {})).bundle
+      try {
+        source = (await FridaCompile.compile(input, {}, {})).bundle
+      }
+      catch(e) {
+        source = ''
+      }
     }
 
-    let script = await this._session.createScript(source)
+    try {
+      let script = await this._session.createScript(source)
 
-    script.events.listen('message', message => {
-      if (message.type === 'error') this.emit('error', message)
-      else if(message.type === 'send') this.emit('send', message.payload, script)
-
-      this.emit('message', message, script)
-    });
-
-    await script.load()
-    this.emit('load', script)
+      script.events.listen('message', message => {
+        if (message.type === 'error') this.emit('error', message)
+        else if(message.type === 'send') this.emit('send', message.payload, script)
+  
+        this.emit('message', message, script)
+      });
+  
+      await script.load()
+      this.emit('load', script)
+    }
+    catch(e) {
+      console.error(e)
+    }
 
     this._cleanup()
   }
