@@ -1,12 +1,11 @@
 # frida-inject
 With this module, you can easily inject javascript into processes.
-This module uses:
-- [frida](https://github.com/frida/frida)
-- [frida-compile](https://github.com/frida/frida-compile)
+
 
 ## Features
-- Clean temp folder from frida trash (Injector files)
-- Kill injector processes after injection (Since useless)
+- Bundle & Transpile injected scripts (no frida-compile needed)
+- Clean frida bloat (tmp folder & injector process)
+- Retry if process not found
 - Easy to use!
 
 ## Installation
@@ -15,56 +14,70 @@ This module uses:
 $ npm install frida-inject
 ```
 
-## Docu
-Class: FridaInject
-  - Constructor (target: String|Number, options: Object)
-    - // target can be a process name or PID
-    - options: Object
-      - delay: Number `[default=0]` // Wait specific time before attach
-      - wait: Boolean `[default=true]` // Wait for the target
-      - waitThreshold: Number `[default=500]` // ms between process check
-  - __Methods__
-  - instance.load (input: String)
-    - // input can be either javascript code, or a js file.
-  - __Events__
-  - Event: 'error'
-    - error \<Error\>
-  - Event: 'attach'
-    - session \<FridaSession\>
-  - Event: 'detach'
-    - session \<FridaSession\>
-  - Event: 'load'
-    - script \<FridaScript\>
-  - Event: 'send'
-    - payload \<Object\>
-    - script \<FridaScript\>
-  - Event: 'message'
-    - message \<String\>
-    - script \<FridaScript\>
+## Documentation
+FridaInject (options): Function
+  - options: Object
+    - clean: Boolean `[default=true]`
+    - debug: Boolean `[default=false]`
+    - device: FridaDevice `[default=localDevice]`
+    - pid: Number // Process id
+    - name: String // Process name
+    - scripts: Array\<String\> `[default=[]]`
+    - waitDelay: Number `[default=0]` (ms to wait before retrying injection|0=off)
+    - onAttach: Function\<session\>
+    - onDetach: Function\<session, reason\>
+    - onLoad: Function\<script\>
+    - onUnload: Function\<script\>
 
 ## Example
-
+#### Simple injection
 ```js
 const FridaInject = require('frida-inject')
 
-let notepad = new FridaInject('calc.exe')
-  .on('error', err => console.error(err))
-  .on('attach', () => {
-    console.log('Attached to process')
-  })
-  .on('detach', () => {
-    console.log('Detached from process')
-  })
-  .on('load', script => {
-    console.log('Script loaded')
-  })
-  .on('send', msg => {
-    console.log('Got send:', msg)
-  })
-  .on('message', msg => {
-    console.log('Got message:', JSON.stringify(message))
+FridaInject({
+  name: 'notepad++.exe',
+  scripts: [
+    'console.log("This is some basic injected script")',
+    './some_folder'
+  ],
+  onAttach: session => console.log('Attached to process'),
+  onDetach: (session, reason) => console.log('Detached from process'),
+  onLoad: script => console.log('Script loaded'),
+  onUnload: script => console.log('Script unloaded')
+})
+```
+
+#### Advanced injection
+```js
+const Frida = require('frida')
+const FridaInject = require('frida-inject')
+
+async function main() {
+  const device = await Frida.getUsbDevice()
+  const pid = await device.spawn('com.atebits.Tweetie2', {
+    url: 'twitter://user?screen_name=fridadotre',
+    env: {
+      'OS_ACTIVITY_DT_MODE': 'YES',
+      'NSUnbufferedIO': 'YES'
+    },
+    stdio: 'pipe'
   })
 
-notepad.load('console.log("This is some basic injected script")') // Inject raw
-notepad.load(`${__dirname}/inject`) // Inject source file
+  FridaInject({
+    device: device,
+    pid: pid,
+    scripts: [
+      'console.log("This is some basic injected script")',
+      './inject'
+    ],
+    onAttach: session => console.log('Attached to process'),
+    onDetach: (session, reason) => console.log('Detached from process'),
+    onLoad: script => console.log('Script loaded'),
+    onUnload: script => console.log('Script unloaded')
+  })
+}
+main()
 ```
+
+## TODO
+- Implement better clean logic

@@ -1,22 +1,18 @@
-const FridaInject = require('../../src/FridaInject')
+const FridaInject = require('../../index.js')
 
-let notepad = new FridaInject('notepad++.exe')
-  .on('error', err => console.error(err))
-  .on('attach', () => {
-    console.log('Attached to process')
-  })
-  .on('detach', () => {
-    console.log('Detached from process')
-  })
-  .on('load', script => {
-    console.log('Script loaded')
-  })
-  .on('send', msg => {
-    console.log('Got send:', msg)
-  })
-  .on('message', msg => {
-    console.log('Got message:', JSON.stringify(message))
-  })
-
-notepad.load('console.log("This is some basic injected script")')
-notepad.load(`${__dirname}/inject`)
+FridaInject({
+  name: 'notepad++.exe',
+  scripts: [
+    'console.log("This is some basic injected script")',
+    './inject'
+  ],
+  onAttach: session => console.log('Attached to process'),
+  onDetach: (session, reason) => console.log('Detached from process'),
+  onLoad: script => {
+    console.log('Script loading')
+    script.message.connect(message => {
+      console.log('Message:', message)
+    })
+  },
+  onUnload: script => console.log('Script unloaded')
+})
