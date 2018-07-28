@@ -1,10 +1,16 @@
 const Babel = require('babel-core')
+const Babelify = require('babelify')
 const Browserify = require('browserify')
 const Frida = require('frida')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const parentDir = path.dirname(module.parent.filename)
+
+const babelConfig = {
+  presets: ['env'],
+  plugins: ['transform-object-rest-spread']
+}
 
 // Used for temp folder cleanup
 function recursiveDelete(path) {
@@ -58,16 +64,14 @@ async function FridaInject(options = {}) {
   }
 
   function transpile(source) {
-    return Babel.transform(source, {
-      presets: ['env'],
-      plugins: ['transform-object-rest-spread']
-    }).code
+    return Babel.transform(source, babelConfig).code
   }
 
   function bundle(file) {
     return new Promise((resolve, reject) => {
       Browserify()
         .require(file, { entry: true })
+        .transform(Babelify.configure(babelConfig))
         .bundle((err, buf) => {
           if (err) reject(err)
           else resolve(buf.toString())

@@ -1,7 +1,7 @@
 {
   "name": "frida-inject",
   "description": "This module allows you to easily inject javascript using frida and frida-load.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "FreehuntX",
   "homepage": "https://github.com/freehuntx/frida-inject#readme",
   "repository": {
@@ -13,6 +13,7 @@
     "babel-core": "^6.26.3",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.7.0",
+    "babelify": "^8.0.0",
     "browserify": "^16.2.2",
     "frida": "^12.0.7"
   },
