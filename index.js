@@ -8,7 +8,7 @@ const path = require('path')
 const parentDir = path.dirname(module.parent.filename)
 
 const babelConfig = {
-  presets: ['env'],
+  presets: ["env"],
   plugins: ['transform-object-rest-spread']
 }
 
@@ -70,10 +70,10 @@ async function FridaInject(options = {}) {
   function bundle(file) {
     return new Promise((resolve, reject) => {
       Browserify()
+        .transform(Babelify.configure(babelConfig), { global: true })
         .require(file, { entry: true })
-        .transform(Babelify.configure(babelConfig))
         .bundle((err, buf) => {
-          if (err) reject(err)
+          if (err) throw err
           else resolve(buf.toString())
         })
     })
@@ -154,19 +154,3 @@ async function FridaInject(options = {}) {
 }
 
 module.exports = FridaInject
-
-/*debug: true,
-//device: Frida,
-//pid: null,
-process: 'notepad++.exe',
-scripts: [
-  'console.log("This is some basic injected script")',
-  './inject'
-],
-onError: err => console.error(err),
-onAttach: session => console.log('Attached to process'),
-onDetach: session => console.log('Detached from process'),
-onLoad: script => console.log('Script loaded'),
-onSend: msg => console.log('Send:', msg),
-onMessage: msg => console.log('Message:', JSON.stringify(msg))
-*/
