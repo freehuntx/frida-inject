@@ -69,7 +69,7 @@ async function FridaInject(options = {}) {
 
   function bundle(file) {
     return new Promise((resolve, reject) => {
-      Browserify()
+      Browserify({ debug: true })
         .transform(Babelify.configure(babelConfig), { global: true })
         .require(file, { entry: true })
         .bundle((err, buf) => {
