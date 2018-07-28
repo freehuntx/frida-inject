@@ -130,20 +130,27 @@ async function FridaInject(options = {}) {
       source = await bundle(moduleFile)
     }
     catch(e) {
-      source = script
+      debugLog('[*] Transpiling script')
+      source = transpile(script)
     }
-
-    debugLog('[*] Transpiling script')
-    source = transpile(source)
     
-    debugLog('[*] Creating frida script')
-    const fridaScript = await session.createScript(source)
-
-    debugLog('[*] Loading frida script')
-    options.onLoad && options.onLoad(fridaScript)
-    await fridaScript.load()
-
-    debugLog('[*] Frida script loaded')
+    let fridaScript
+    try {
+      debugLog('[*] Creating frida script')
+      fridaScript = await session.createScript(source)
+      fridaScript.message.connect(message => {
+        if (message.type === 'error') console.error(message.stack)
+      })
+  
+      debugLog('[*] Loading frida script')
+      options.onLoad && options.onLoad(fridaScript)
+      await fridaScript.load()
+  
+      debugLog('[*] Frida script loaded')
+    }
+    catch(e) {
+      console.error(e)
+    }
     
     process.on('SIGTERM', () => unloadFridaScript(fridaScript))
     process.on('SIGINT', () => unloadFridaScript(fridaScript))
