@@ -143,7 +143,7 @@ async function FridaInject(options = {}) {
     options.onLoad && options.onLoad(fridaScript)
     await fridaScript.load()
 
-    debugLog('[*] Frida script loaded\n')
+    debugLog('[*] Frida script loaded')
     
     process.on('SIGTERM', () => unloadFridaScript(fridaScript))
     process.on('SIGINT', () => unloadFridaScript(fridaScript))
