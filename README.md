@@ -22,7 +22,7 @@ FridaInject (options): Function
     - device: FridaDevice `[default=localDevice]`
     - pid: Number // Process id
     - name: String // Process name
-    - scripts: Array\<String\> `[default=[]]`
+    - scripts: Array\< String|Array\<String\> \> `[default=[]]`
     - waitDelay: Number `[default=0]` (ms to wait before retrying injection|0=off)
     - onAttach: Function\<session\>
     - onDetach: Function\<session, reason\>
@@ -47,7 +47,21 @@ FridaInject({
 })
 ```
 
-#### Advanced injection
+#### Simple injection (Bundled scripts)
+Since version 0.3.0 you can provide multiple scripts into one script.  
+This will allow you to share a global scope.
+```js
+const FridaInject = require('frida-inject')
+
+FridaInject({
+  name: 'notepad++.exe',
+  scripts: [
+    ['frida-ex-nativefunction', 'console.log(ExNativeFunction)']
+  ]
+})
+```
+
+#### Advanced injection (provided device)
 ```js
 const Frida = require('frida')
 const FridaInject = require('frida-inject')
