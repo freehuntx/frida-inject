@@ -70,8 +70,8 @@ async function FridaInject(options = {}) {
     })
 
     debugLog('[*] Loading frida script')
-    options.onLoad && options.onLoad(fridaScript)
     await fridaScript.load()
+    options.onLoad && options.onLoad(fridaScript)
 
     debugLog('[*] Frida script loaded')
     
