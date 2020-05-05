@@ -1,13 +1,13 @@
 
-const Babel = require('babel-core')
+const Babel = require('@babel/core')
 const Babelify = require('babelify')
 const Browserify = require('browserify')
 const path = require('path')
 const parentDir = path.dirname(module.parent.parent.filename)
 
 const babelConfig = {
-  presets: ["env"],
-  plugins: ['transform-object-rest-spread']
+  presets: ['@babel/preset-env'],
+  plugins: ['@babel/plugin-proposal-object-rest-spread']
 }
 
 function moduleExists(name) {
