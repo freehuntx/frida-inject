@@ -1,8 +1,23 @@
-const Frida = require('frida')
-const compiler = require('./compiler')
-const debloat = require('./debloat')
+import * as Frida from 'frida';
+import { compile } from './compiler';
+import debloat from './debloat';
 
-async function FridaInject(options = {}) {
+interface FridaInjectOptions {
+  clean?: boolean;
+  debug?: boolean;
+  device?: Frida.Device;
+  pid?: number;
+  name?: string;
+  waitDelay?: number;
+  scripts?: string[];
+  onUnload?: (script: Frida.Script) => void;
+  onDetach?: (session: Frida.Session, reason: string) => void;
+  onAttach?: (session: Frida.Session) => void;
+  onLoad?: (script: Frida.Script) => void;
+  $waitNotified?: boolean;
+}
+
+async function FridaInject(options: FridaInjectOptions = {}) {
   options.clean = options.clean !== undefined ? options.clean : true
   options.debug = options.debug !== undefined ? options.debug : false
   options.device = options.device || await Frida.getLocalDevice()
@@ -12,12 +27,12 @@ async function FridaInject(options = {}) {
   options.scripts = options.scripts || []
 
   if (options.pid && options.name) throw new Error('Use either pid OR name, but not both!')
-  
-  function debugLog(...args) {
+
+  function debugLog(...args: any[]) {
     if (options.debug) console.log(...args)
   }
 
-  function unloadFridaScript(fridaScript) {
+  function unloadFridaScript(fridaScript: Frida.Script) {
     debugLog('[*] Frida script unloaded')
     options.onUnload && options.onUnload(fridaScript)
     fridaScript.unload()
@@ -28,19 +43,20 @@ async function FridaInject(options = {}) {
   else if (options.name)
     debugLog('[*] Attaching to process:', options.name)
   else throw new Error('Missing pid/name option!')
-  
-  let session
+
+  let session: Frida.Session;
   try {
-    session = await options.device.attach(options.pid || options.name)
-    session.detached.connect(reason => {
+    const target = options.pid || options.name!;
+    session = await options.device!.attach(target)
+    session.detached.connect((reason) => {
       debugLog(`[*] Detached from process (reason=${reason})`)
       options.onDetach && options.onDetach(session, reason)
     })
   }
-  catch(e) {
-    if (e.message === 'Process not found' && options.name && options.waitDelay > 0) {
+  catch (e: any) {
+    if (e.message === 'Process not found' && options.name && (options.waitDelay || 0) > 0) {
       if (!options.$waitNotified) {
-        console.log('Process', options.name, 'not found. Retrying every', (options.waitDelay / 1000).toFixed(6).slice(0, -5), 'seconds...')
+        console.log('Process', options.name, 'not found. Retrying every', (options.waitDelay! / 1000).toFixed(6).slice(0, -5), 'seconds...')
         options.$waitNotified = true
       }
 
@@ -58,14 +74,16 @@ async function FridaInject(options = {}) {
   options.onAttach && options.onAttach(session)
 
 
-  for (let i=0; i<options.scripts.length; i++) {
+  for (let i = 0; i < (options.scripts || []).length; i++) {
     debugLog('[*] Compiling script')
-    const source = await compiler.compile(options.scripts[i])
-    // console.log(source)
-    
+    const script = options.scripts![i];
+    const source = await compile(script)
+
+    if (!source) continue;
+
     debugLog('[*] Creating frida script')
     const fridaScript = await session.createScript(source)
-    fridaScript.message.connect(message => {
+    fridaScript.message.connect((message: any) => {
       if (message.type === 'error') console.error(message.stack)
     })
 
@@ -74,7 +92,7 @@ async function FridaInject(options = {}) {
     options.onLoad && options.onLoad(fridaScript)
 
     debugLog('[*] Frida script loaded')
-    
+
     process.on('SIGTERM', () => unloadFridaScript(fridaScript))
     process.on('SIGINT', () => unloadFridaScript(fridaScript))
   }
@@ -83,4 +101,4 @@ async function FridaInject(options = {}) {
   if (options.clean) debloat()
 }
 
-module.exports = FridaInject
+export = FridaInject;

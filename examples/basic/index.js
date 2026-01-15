@@ -1,4 +1,4 @@
-const FridaInject = require('../../src/index.js')
+const FridaInject = require('../../dist/index.js')
 
 FridaInject({
   name: 'notepad++.exe',

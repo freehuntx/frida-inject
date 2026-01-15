@@ -1,13 +1,13 @@
-const Frida = require('frida')
-const fs = require('fs')
-const os = require('os')
+import * as Frida from 'frida';
+import * as fs from 'fs';
+import * as os from 'os';
 
 // Used for temp folder cleanup
-function recursiveDelete(path) {
+function recursiveDelete(pathStr: string) {
   try {
-    if (fs.existsSync(path)) {
-      fs.readdirSync(path).forEach(file => {
-        let curPath = `${path}/${file}`
+    if (fs.existsSync(pathStr)) {
+      fs.readdirSync(pathStr).forEach(file => {
+        let curPath = `${pathStr}/${file}`
 
         if (fs.lstatSync(curPath).isDirectory())
           recursiveDelete(curPath)
@@ -15,13 +15,13 @@ function recursiveDelete(path) {
           fs.unlinkSync(curPath)
       })
 
-      fs.rmdirSync(path);
+      fs.rmdirSync(pathStr);
     }
-  } catch(e) {}
+  } catch (e) { }
 }
 
 
-module.exports = async function debloat() {
+export default async function debloat() {
   // First lets remove all injectors currently running
   let localDevice = await Frida.getLocalDevice()
   let processes = await localDevice.enumerateProcesses()
