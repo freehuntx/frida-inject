@@ -10,7 +10,7 @@
     "@babel/plugin-proposal-object-rest-spread": "^7.12.1",
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
-    "frida": "^14.0.8"
+    "frida": "^17.5.2"
   },
   "files": [
     "src"
