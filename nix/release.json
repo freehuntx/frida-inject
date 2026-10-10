@@ -1,4 +1,9 @@
 {
-  "version": null,
-  "hashes": {}
+  "version": "1.0.0",
+  "hashes": {
+    "linux-arm64": "sha256-jYkb2lS6o3K06/d6XNA/Cz/iCfzzDICZFk+2/BDaTZc=",
+    "linux-x64": "sha256-qH11O2WOhN7LKD/z5lO0PikdoYBqizHImbid1HGwZ8Q=",
+    "macos-arm64": "sha256-xJxi5FhIjefBqOMYxEEVUPL81PH5qLyBnhuJEK4H7DQ=",
+    "macos-x64": "sha256-hZJ5PO3gxPvGaDzuqbBLYt7NdwVQii6ltfndkSHcebI="
+  }
 }
