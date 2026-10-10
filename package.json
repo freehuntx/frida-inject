@@ -1,39 +1,70 @@
 {
   "name": "frida-inject",
-  "description": "This module allows you to easily inject javascript using frida and frida-load.",
-  "version": "0.5.0",
+  "version": "1.0.0",
+  "description": "Inject JavaScript or TypeScript into running processes with Frida. Bundles your agent code on the fly with esbuild.",
   "author": "FreehuntX",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "scripts": {
-    "build": "tsc"
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
   },
-  "dependencies": {
-    "@babel/core": "^7.28.6",
-    "@babel/plugin-transform-object-rest-spread": "^7.28.6",
-    "@babel/preset-env": "^7.28.6",
-    "babelify": "^10.0.0",
-    "browserify": "^17.0.1",
-    "frida": "^17.5.2"
-  },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "files": [
-    "src",
     "dist"
   ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p examples",
+    "lint": "biome check",
+    "format": "biome check --write",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build",
+    "build:binary": "npm run build && node scripts/build-binary.mjs"
+  },
   "keywords": [
-    "frida"
+    "frida",
+    "inject",
+    "injection",
+    "instrumentation",
+    "reverse-engineering",
+    "esbuild",
+    "typescript"
   ],
-  "license": "MIT",
   "homepage": "https://github.com/freehuntx/frida-inject#readme",
+  "bugs": "https://github.com/freehuntx/frida-inject/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/freehuntx/frida-inject"
+    "url": "git+https://github.com/freehuntx/frida-inject.git"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "frida": "^17.23.3"
   },
   "devDependencies": {
-    "@types/babel__core": "^7.20.5",
-    "@types/babelify": "^7.3.10",
-    "@types/browserify": "^12.0.40",
-    "@types/node": "^25.0.8",
-    "typescript": "^5.9.3"
+    "@biomejs/biome": "^2.5.15",
+    "@types/frida-gum": "^19.12.0",
+    "@types/node": "^26.6.5",
+    "postject": "1.0.0-alpha.6",
+    "tsdown": "^0.23.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  },
+  "bin": {
+    "frida-inject": "./dist/cli.mjs"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "frida": true
   }
 }

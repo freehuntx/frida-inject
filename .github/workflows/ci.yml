@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      # Allow Frida to attach to processes it did not start itself.
+      - run: sudo sysctl -w kernel.yama.ptrace_scope=0
+      - run: npm test
+        env:
+          FRIDA_TEST_ATTACH: '1'
+
+  # Checks that the flake evaluates and that the release in nix/release.json
+  # downloads and runs. Skipped until the first release exists.
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - name: Build the Nix package
+        run: |
+          if [ "$(jq -r .version nix/release.json)" = null ]; then
+            echo "No release in nix/release.json yet, skipping."
+            exit 0
+          fi
+          nix build --print-build-logs
+          ./result/bin/frida-inject --version

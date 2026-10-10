@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "frida-gum"],
+    "isolatedDeclarations": false,
+    "declaration": false,
+    "allowJs": true,
+    // Check against the source, so the examples typecheck without a build.
+    "paths": { "frida-inject": ["../src/index.ts"] }
+  },
+  "include": ["."]
+}

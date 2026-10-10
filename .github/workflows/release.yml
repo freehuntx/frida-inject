@@ -1,0 +1,129 @@
+# Runs when a version tag is pushed, for example:
+#
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# It builds a standalone binary for every platform, attaches them to a new
+# GitHub release, points the Nix package at it and, if enabled, publishes the
+# package to npm.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  binaries:
+    name: Binary (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x64, runner: ubuntu-latest }
+          - { name: linux-arm64, runner: ubuntu-24.04-arm }
+          - { name: macos-arm64, runner: macos-latest }
+          - { name: macos-x64, runner: macos-15-intel }
+          - { name: windows-x64, runner: windows-latest }
+          - { name: windows-arm64, runner: windows-11-arm }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Check that the tag matches package.json
+        shell: bash
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+      - run: npm ci
+      - run: npm run build:binary
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.name }}
+          path: release/*
+          if-no-files-found: error
+
+  release:
+    name: GitHub release
+    needs: binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          pattern: binary-*
+          merge-multiple: true
+      - name: Write checksums
+        working-directory: release
+        run: sha256sum frida-inject-* > SHA256SUMS.txt
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/* --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+
+  # Points the Nix package at the new release by committing nix/release.json
+  # to master. If master is protected, run the script by hand instead:
+  #   node scripts/update-nix-release.mjs <version> SHA256SUMS.txt
+  nix:
+    name: Update the Nix package
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: master
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Write nix/release.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --pattern SHA256SUMS.txt --dir "$RUNNER_TEMP"
+          node scripts/update-nix-release.mjs "$GITHUB_REF_NAME" "$RUNNER_TEMP/SHA256SUMS.txt"
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nix/release.json
+          git diff --cached --quiet && exit 0
+          git commit -m "nix: use release $GITHUB_REF_NAME"
+          git push origin master
+
+  # Off by default. To turn it on:
+  #   1. On npmjs.com, open the package settings and add this repository and
+  #      "release.yml" as a trusted publisher. No token or secret is needed.
+  #   2. In the repository settings on GitHub, add the variable NPM_PUBLISH=true
+  #      (Settings > Secrets and variables > Actions > Variables).
+  npm:
+    name: Publish to npm
+    needs: release
+    if: vars.NPM_PUBLISH == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs a recent npm.
+      - run: npm install --global npm@latest
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --provenance --access public
